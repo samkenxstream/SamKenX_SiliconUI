@@ -4,6 +4,7 @@ import client from '@/helpers/client';
 import { useWeb3 } from '@/composables/useWeb3';
 import { getInstance } from '@snapshot-labs/lock/plugins/vue3';
 import proposalSchema from '@/helpers/x/schemas/proposal.json';
+import {eip712ToFelts} from '@/helpers/x/signature.ts';
 import voteSchema from '@/helpers/x/schemas/vote.json';
 import { useTxStatus } from '@/composables/useTxStatus';
 
@@ -28,11 +29,13 @@ const inputVote = ref({
 });
 
 async function proposal() {
-  const envelop = await client.proposal(
+  let envelop = await client.proposal(
     auth.web3,
     web3.value.account,
     inputProposal.value
   );
+  // Transform the signature to an array of felts
+  envelop.sig = eip712ToFelts(envelop.sig);
   pendingCount.value++;
   const receipt = await client.send(envelop);
   pendingCount.value--;
@@ -40,12 +43,14 @@ async function proposal() {
 }
 
 async function vote() {
-  const envelop = await client.vote(
+  let envelop = await client.vote(
     auth.web3,
     web3.value.account,
     inputVote.value
   );
   pendingCount.value++;
+  // Transform the signature to an array of felts
+  envelop.sig= eip712ToFelts(envelop.sig)
   const receipt = await client.send(envelop);
   pendingCount.value--;
   console.log('Receipt', receipt);
